@@ -3,19 +3,19 @@
 module processor_tb;
 
     // Inputs
-    logic [31:0] data_in;
-    logic [31:0] i_data;
-    logic data_select;
-    logic clk;
-    logic rstN;
-    logic [15:0] status_flags;
+    reg [31:0] data_in;
+    reg [31:0] i_data;
+    reg data_select;
+    reg clk;
+    reg rstN;
+    reg [15:0] status_flags;
 
     // Outputs
-    logic [31:0] data_out;
-    logic [7:0] status;
-    logic [2:0] Q;
+    wire [31:0] data_out;
+    wire [7:0] status;
+    wire [2:0] Q;
 
-    // Instantiate the processor module
+    // Instantiate the Unit Under Test (UUT)
     processor uut (
         .data_in(data_in),
         .i_data(i_data),
@@ -29,55 +29,74 @@ module processor_tb;
     );
 
     // Clock generation
-    initial clk = 0;
-    always #5 clk = ~clk; // 100 MHz clock
+    initial begin
+        clk = 0;
+        forever #5 clk = ~clk;  // Generate a clock with a period of 10ns
+    end
 
     // Test sequence
     initial begin
-        // Initialize inputs
+        // Initialize Inputs
         data_in = 0;
         i_data = 0;
         data_select = 0;
         rstN = 0;
         status_flags = 0;
 
-        // Test Case 1: Reset behavior
-        #10 rstN = 1; // 
-        #10 rstN = 0; // reset
-        #10 rstN = 1; // 
+        // Wait for global reset
+        #100;
+        rstN = 1;  // Release reset
 
-        // Test Case 2: Data Select Edge Cases
-        #10 data_select = 0;
+        // Test Case 1: Basic functionality with data_select = 0
+        data_select = 0;
         data_in = 32'hAAAA_AAAA;
         i_data = 32'hBBBB_BBBB;
-        #10 data_select = 1;
+        status_flags = 16'hFFFF;  // All flags set
+        #10;
 
-        // Test Case 3: Status Flags Edge Cases
-        #10 status_flags = 16'hFFFF; // All flags high
-        #10 status_flags = 16'h0000; // All flags low
-        #10 status_flags = 16'h8000; // Only int_en flag high
-        #10 status_flags = 16'h0001; // Only parity flag high
+        // Test Case 2: Basic functionality with data_select = 1
+        data_select = 1;
+        data_in = 32'hCCCC_CCCC;
+        i_data = 32'hDDDD_DDDD;
+        status_flags = 16'h0000;  // All flags reset
+        #10;
 
-        // Test Case 4: Priority Encoder Edge Cases
-        #10 status_flags[15:8] = 8'b1111_1111; // All inputs high
-        #10 status_flags[15:8] = 8'b0000_0001; // Only lowest priority input high
-        #10 status_flags[15:8] = 8'b1000_0000; // Only highest priority input high
-        #10 status_flags[15:8] = 8'b0101_0101; // Alternating inputs high
+        // Test Case 3: Edge case with status_flags
+        data_select = 0;
+        data_in = 32'hEEEE_EEEE;
+        i_data = 32'hFFFF_FFFF;
+        status_flags = 16'h8000;  // Only the highest bit set
+        #10;
 
-        // Test Case 5: Simultaneous Changes
-        #10 data_select = 0;
-        status_flags = 16'hAAAA;
-        #10 data_select = 1;
-        status_flags = 16'h5555;
+        // Test Case 4: Another edge case with status_flags
+        data_select = 1;
+        data_in = 32'h1111_1111;
+        i_data = 32'h2222_2222;
+        status_flags = 16'h0001;  // Only the lowest bit set
+        #10;
 
-        // End simulation
-        #10 $finish;
+        // Test Case 5: Random values
+        data_select = 0;
+        data_in = 32'h3333_3333;
+        i_data = 32'h4444_4444;
+        status_flags = 16'hABCD;  // Random flags
+        #10;
+
+        // Test Case 6: Random values
+        data_select = 1;
+        data_in = 32'h5555_5555;
+        i_data = 32'h6666_6666;
+        status_flags = 16'hDCBA;  // Random flags
+        #10;
+
+        // Finish simulation
+        $finish;
     end
 
     // Monitor changes
     initial begin
-        $monitor("Time: %t, data_in: %h, i_data: %h, data_select: %b, clk: %b, rstN: %b, status_flags: %h, data_out: %h, status: %h, Q: %b",
-                 $time, data_in, i_data, data_select, clk, rstN, status_flags, data_out, status, Q);
+        $monitor("Time = %t, data_in = %h, i_data = %h, data_select = %b, status_flags = %h, data_out = %h, status = %h, Q = %b",
+                 $time, data_in, i_data, data_select, status_flags, data_out, status, Q);
     end
 
 endmodule

@@ -23,7 +23,8 @@ module processor
                           .zero(status_flags[4]), 
                           .carry(status_flags[3]), 
                           .neg(status_flags[2]), 
-                          .parity(status_flags[1:0]));
+                          .parity(status_flags[1:0]),
+                          .status1(status));
 
     
     // Instantiate the Pri_En module
@@ -59,21 +60,21 @@ module status_reg
   input logic carry,
   input logic neg,
   input logic [1:0] parity,
-  output logic [7:0] status
+  output logic [7:0] status1
 );
 
-    always_ff @(posedge clk or negedge rstN) begin
+    always_ff @(posedge clk) begin
         if (!rstN) begin
-            status <= 8'b0;
+            status1 <= 8'b0;
         end else begin
             // Assign values to the status register based on input flags
-            status[7] <= int_en;
-            status[6] <= 1'b1;  // Unused state
-            status[5] <= 1'b1;  // Unused state
-            status[4] <= zero;
-            status[3] <= carry;
-            status[2] <= neg;
-            status[1:0] <= parity;  
+            status1[7] <= int_en;
+            status1[6] <= 1'b1;  // Unused state
+            status1[5] <= 1'b1;  // Unused state
+            status1[4] <= zero;
+            status1[3] <= carry;
+            status1[2] <= neg;
+            status1[1:0] <= parity;  
         end
     end
 
@@ -87,7 +88,7 @@ module Pri_En
 
     // Priority encoding logic using case statement
     always_comb begin
-        case (D)
+        casez (D)
             8'b1???????: Q = 3'b111;
             8'b01??????: Q = 3'b110;
             8'b001?????: Q = 3'b101;
