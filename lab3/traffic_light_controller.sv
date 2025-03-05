@@ -3,7 +3,7 @@ module traffic_light_controller (
     output logic [1:0] light_NS, light_EW  // 00=Red, 01=Yellow, 10=Green
 );
 
-    // State enumeration definition
+    //declare your enum here, enum name should be "state_e"
     typedef enum logic [2:0] {
         RED_RED = 3'b000,
         NS_GR   = 3'b001,
@@ -12,32 +12,35 @@ module traffic_light_controller (
         EW_YE   = 3'b100
     } state_e;
 
-    state_e current_state, next_state;
+    //create two variables called "state" and "next" of enumeration type
+    state_e current, next;
 
+    //start your procedural blocks from here
+    
     // Sequential logic for state updates and asynchronous reset
-    always_ff @(posedge clk or negedge reset) begin
+    always_ff @(posedge clk, negedge reset) begin
         if (!reset)       // Asynchronous reset
-            current_state <= RED_RED;
+            current <= RED_RED;
         else
-            current_state <= next_state;
+            current <= next;
     end
 
     // Combinational logic for next state determination and output assignment
     always_comb begin
-        next_state = current_state;  // Default: no state change
+        next = current;  // Default: no state change
 
         // State transition logic
-        case (current_state)
-            RED_RED: next_state = NS_GR;
-            NS_GR:   next_state = NS_YE;
-            NS_YE:   next_state = EW_GR;
-            EW_GR:   next_state = EW_YE;
-            EW_YE:   next_state = RED_RED;
-            default: next_state = RED_RED;
+        case (current)
+            RED_RED: next = NS_GR;
+            NS_GR:   next = NS_YE;
+            NS_YE:   next = EW_GR;
+            EW_GR:   next = EW_YE;
+            EW_YE:   next = RED_RED;
+            default: next = RED_RED;
         endcase
 
         // Traffic light output control based on current state
-        case (current_state)
+        case (current)
             NS_GR: begin
                 light_NS = 2'b10; // NS Green
                 light_EW = 2'b00; // EW Red

@@ -14,11 +14,11 @@ module traffic_light_controller_tb;
     // Test sequence
     initial begin
         $monitor($time, "ps: State=%b, NS=%b, EW=%b",
-            DUT.current_state, light_NS, light_EW);
+            DUT.current, light_NS, light_EW);
 
         // Initialize interface
         reset = 0;  // Active-low reset
-        #10 reset = 1;  // Deassert reset
+        #15 reset = 1;  // Deassert reset
         #20;          // Wait for clock edges
 
         // Run simulation for multiple cycles
