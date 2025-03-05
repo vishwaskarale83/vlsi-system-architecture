@@ -13,12 +13,12 @@ module fsm(
     import fsm10_pkg::*;
 
     //create two variables called "state" and "next_state" of enum type
-    state_e state, next_state_state;
+    state_e state, next_state;
 
     //Start your procedural blocks from here
     always_ff @(posedge clk, negedge rst_n) begin
         if (!rst_n) state <= S0;
-        else state <= next_state_state;
+        else state <= next_state;
     end
 
     always_comb begin
@@ -54,32 +54,32 @@ module fsm(
                     y1 = 1'b1;
                 end
             S4: begin
-                    if (jmp) next_state = S3 
+                    if (jmp) next_state = S3; 
                     else next_state = S5;
                     y1 = 1'b0;
                 end
             S5: begin 
-                    if (jmp) next_state = S3 
+                    if (jmp) next_state = S3; 
                     else next_state = S6;
                     y1 = 1'b0;
                 end
             S6: begin 
-                    if (jmp) next_state = S3 
+                    if (jmp) next_state = S3; 
                     else next_state = S7;
                     y1 = 1'b0;
                 end
             S7: begin 
-                    if (jmp) next_state = S3 
+                    if (jmp) next_state = S3; 
                     else next_state = S8;
                     y1 = 1'b0;
                 end
             S8: begin 
-                    if (jmp) next_state = S3 
+                    if (jmp) next_state = S3; 
                     else next_state = S9;
                     y1 = 1'b0;
                 end
             S9: begin 
-                    if (jmp) next_state = S3 
+                    if (jmp) next_state = S3; 
                     else next_state = S0;
                     y1 = 1'b0;
                 end
