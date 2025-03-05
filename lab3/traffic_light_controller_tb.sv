@@ -13,8 +13,8 @@ module traffic_light_controller_tb;
 
     // Test sequence
     initial begin
-        $monitor($time, "ps: State=%b, NS=%b, EW=%b",
-            DUT.current, light_NS, light_EW);
+        // $monitor($time, "ps: State=%b, NS=%b, EW=%b",
+        //     DUT.state, light_NS, light_EW);
 
         // Initialize interface
         reset = 0;  // Active-low reset

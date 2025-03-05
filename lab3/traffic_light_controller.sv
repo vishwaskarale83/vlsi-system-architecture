@@ -13,24 +13,24 @@ module traffic_light_controller (
     } state_e;
 
     //create two variables called "state" and "next" of enumeration type
-    state_e current, next;
+    state_e state, next;
 
     //start your procedural blocks from here
     
     // Sequential logic for state updates and asynchronous reset
     always_ff @(posedge clk, negedge reset) begin
         if (!reset)       // Asynchronous reset
-            current <= RED_RED;
+            state <= RED_RED;
         else
-            current <= next;
+            state <= next;
     end
 
     // Combinational logic for next state determination and output assignment
     always_comb begin
-        next = current;  // Default: no state change
+        next = state;  // Default: no state change
 
         // State transition logic
-        case (current)
+        case (state)
             RED_RED: next = NS_GR;
             NS_GR:   next = NS_YE;
             NS_YE:   next = EW_GR;
@@ -39,8 +39,8 @@ module traffic_light_controller (
             default: next = RED_RED;
         endcase
 
-        // Traffic light output control based on current state
-        case (current)
+        // Traffic light output control based on state state
+        case (state)
             NS_GR: begin
                 light_NS = 2'b10; // NS Green
                 light_EW = 2'b00; // EW Red

@@ -1,107 +1,172 @@
 module fsm_tb;
+
+    // Import the package
+    import fsm10_pkg::*;
+
+    // Testbench signals
     logic rst_n, clk, jmp, go;
     logic y1;
-    
-    // Instantiate FSM design
-    fsm DUT(.rst_n, .clk, .jmp, .go, .y1);
+
+    // Instantiate the Design Under Test (DUT)
+    fsm dut (
+        .rst_n(rst_n),
+        .clk(clk),
+        .jmp(jmp),
+        .go(go),
+        .y1(y1)
+    );
+
+    // Testbench variables
+    state_e expected_state;
+    int fail_count = 0;
+    string test_case_name;
 
     // Clock generation
     initial begin
         clk = 0;
-        forever #5 clk = !clk;
+        forever #10 clk = ~clk;
     end
 
-    // Test sequence
-    initial begin
-        $monitor("T=%0t: State=%s, y1=%b\n", $time, DUT.state, y1);
-        
-        // Reset FSM to S0
-        $display("Resetting FSM");
-        rst_n = 1'b0;
-        jmp = 0;
-        go = 0;
-        #10;
-        rst_n = 1'b1;
-        #10;
-        
-        // Test normal progression with go=1
-        $display("Normal progression with go=1");
-        go = 1'b1;
-        jmp = 0;
-        for (int i = 0; i < 10; i++) begin
-            @(posedge clk);
-        end
-        go = 0;
-        #10;
-        
-        // Test jmp in S0
-        $display("Testing jmp in S0");
-        @(posedge clk);
-        go = 1;
-        jmp = 1;
-        @(posedge clk);
-        jmp = 0;
-        #10;
-        
-        // Test jmp in S1
-        $display("Testing jmp in S1");
-        @(posedge clk);
-        go = 1;
-        @(posedge clk);
-        jmp = 1;
-        @(posedge clk);
-        jmp = 0;
-        #10;
-        
-        // Test jmp in S3
-        $display("Testing jmp in S3");
-        @(posedge clk);
-        jmp = 1;
-        @(posedge clk);
-        @(posedge clk);
-        jmp = 0;
-        #10;
-        
-        // Test jmp in S4
-        $display("Testing jmp in S4");
-        @(posedge clk);
-        @(posedge clk);
-        jmp = 1;
-        @(posedge clk);
-        jmp = 0;
-        #10;
-        
-        // Test all input combinations
-        $display("Testing all input combinations");
-        rst_n = 1'b0;
-        #10;
-        rst_n = 1'b1;
-        #10;
-        for (int go_val = 0; go_val <= 1; go_val++) begin
-            go = go_val;
-            for (int jmp_val = 0; jmp_val <= 1; jmp_val++) begin
-                jmp = jmp_val;
-                @(posedge clk);
-                $display("go=%b, jmp=%b: y1=%b", go, jmp, y1);
+    // Task to run a test case
+    task automatic run_test(input string name, input logic go_val, jmp_val);
+        state_e expected_next_state;
+        logic expected_y1;
+
+        test_case_name = name;
+        go = go_val;
+        jmp = jmp_val;
+
+        // Calculate expected next state and y1 based on current expected_state
+        case (expected_state)
+            S0: begin 
+                if (!go_val) begin
+                    expected_next_state = S0;
+                end else begin
+                    if (jmp_val) begin
+                        expected_next_state = S3;
+                    end else begin
+                        expected_next_state = S1;
+                    end
+                end
+                expected_y1 = 1'b0;
+            end 
+            S1: begin
+                if (jmp_val) expected_next_state = S3;
+                else expected_next_state = S2;
+                expected_y1 = 1'b0;
             end
+            S2: begin 
+                expected_next_state = S3;
+                expected_y1 = 1'b0;
+            end
+            S3: begin
+                if (jmp_val) expected_next_state = S3;
+                else expected_next_state = S4;
+                expected_y1 = 1'b1;
+            end
+            S4: begin
+                if (jmp_val) expected_next_state = S3; 
+                else expected_next_state = S5;
+                expected_y1 = 1'b0;
+            end
+            S5: begin 
+                if (jmp_val) expected_next_state = S3; 
+                else expected_next_state = S6;
+                expected_y1 = 1'b0;
+            end
+            S6: begin 
+                if (jmp_val) expected_next_state = S3; 
+                else expected_next_state = S7;
+                expected_y1 = 1'b0;
+            end
+            S7: begin 
+                if (jmp_val) expected_next_state = S3; 
+                else expected_next_state = S8;
+                expected_y1 = 1'b0;
+            end
+            S8: begin 
+                if (jmp_val) expected_next_state = S3; 
+                else expected_next_state = S9;
+                expected_y1 = 1'b0;
+            end
+            S9: begin 
+                if (jmp_val) expected_next_state = S3; 
+                else expected_next_state = S0;
+                expected_y1 = 1'b0;
+            end
+        endcase
+
+        #10; // Wait for clk edge
+
+        if(y1 !== expected_y1) begin
+            $display("FAIL %s: Expected y1=%b, got y1=%b", name, expected_y1, y1);
+            fail_count++;
+        end else begin
+            $display("PASS %s", name);
         end
-        #10;
-        
-        // Asynchronous reset test
-        $display("Testing reset during operation");
-        @(posedge clk);
-        rst_n = 1'b0;
-        #5;
-        rst_n = 1'b1;
-        #10;
-        
-        $display("Simulation complete");
+
+        // Update expected_state
+        expected_state = expected_next_state;
+    endtask
+
+    initial begin
+        // Initialize
+        rst_n = 0;
+        go = 0;
+        jmp = 0;
+        expected_state = S0;
+        #20;
+        rst_n = 1;
+
+        // Test all transitions
+        // S0 transitions
+        run_test("S0-go0", 0, 0);
+        run_test("S0-go1-jmp0", 1, 0);
+        run_test("S0-go1-jmp1", 1, 1);
+
+        // S1 transitions
+        run_test("S1-jmp0", 0, 0);
+        run_test("S1-jmp1", 0, 1);
+
+        // S2 transition
+        run_test("S2", 0, 0);
+
+        // S3 transitions
+        run_test("S3-jmp0", 0, 0);
+        run_test("S3-jmp1", 0, 1);
+
+        // S4 transitions
+        run_test("S4-jmp0", 0, 0);
+        run_test("S4-jmp1", 0, 1);
+
+        // S5 transitions
+        run_test("S5-jmp0", 0, 0);
+        run_test("S5-jmp1", 0, 1);
+
+        // S6 transitions
+        run_test("S6-jmp0", 0, 0);
+        run_test("S6-jmp1", 0, 1);
+
+        // S7 transitions
+        run_test("S7-jmp0", 0, 0);
+        run_test("S7-jmp1", 0, 1);
+
+        // S8 transitions
+        run_test("S8-jmp0", 0, 0);
+        run_test("S8-jmp1", 0, 1);
+
+        // S9 transitions
+        run_test("S9-jmp0", 0, 0);
+        run_test("S9-jmp1", 0, 1);
+
+        // Final result
+        #20;
+        if(fail_count == 0) begin
+            $display("PASS All Tests Passed");
+        end else begin
+            $display("FAIL %0d Tests Failed", fail_count);
+        end
         $finish;
     end
-    
-    // Dump waveforms
-    initial begin
-        $dumpfile("fsm_tb.vcd");
-        $dumpvars(0, fsm_tb);
-    end
+
 endmodule
