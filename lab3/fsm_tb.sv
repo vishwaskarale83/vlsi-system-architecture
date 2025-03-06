@@ -22,7 +22,16 @@ module fsm_tb;
         forever #10 clk = ~clk;
     end
 
-    task automatic run_test(input string name, input logic go_val, jmp_val);
+    task automatic reset_dut();
+        rst_n = 0;
+        go = 0;
+        jmp = 0;
+        #20;
+        rst_n = 1;
+        @(posedge clk);
+    endtask
+
+    task automatic run_test(input string name, input logic go_val, jmp_val, state_e start_state);
         state_e expected_next_state;
         logic expected_y1;
 
@@ -30,7 +39,7 @@ module fsm_tb;
         go = go_val;
         jmp = jmp_val;
 
-        case (expected_state)
+        case (start_state)
             S0: begin 
                 if (!go_val) expected_next_state = S0;
                 else if (jmp_val) expected_next_state = S3;
@@ -75,7 +84,7 @@ module fsm_tb;
             end
         endcase
 
-        #10; // Wait for clk edge
+        @(posedge clk);
 
         if(y1 !== expected_y1) begin
             $display("FAIL %s: Expected y1=%b, got y1=%b", name, expected_y1, y1);
@@ -83,41 +92,173 @@ module fsm_tb;
         end else begin
             $display("PASS %s", name);
         end
-
-        expected_state = expected_next_state;
     endtask
 
     initial begin
-        rst_n = 0;
-        #20;
-        rst_n = 1;
-        expected_state = S0;
-
         // Test S0 transitions
-        run_test("S0-go0", 0, 0);       // Stay in S0
-        run_test("S0-go1-jmp0", 1, 0);  // S0 -> S1
-        run_test("S1-jmp0", 0, 0);      // S1 -> S2
-        run_test("S2", 0, 0);           // S2 -> S3
-        run_test("S3-jmp0", 0, 0);      // S3 -> S4
-        run_test("S4-jmp0", 0, 0);      // S4 -> S5
-        run_test("S5-jmp0", 0, 0);      // S5 -> S6
-        run_test("S6-jmp0", 0, 0);      // S6 -> S7
-        run_test("S7-jmp0", 0, 0);      // S7 -> S8
-        run_test("S8-jmp0", 0, 0);      // S8 -> S9
-        run_test("S9-jmp0", 0, 0);      // S9 -> S0
+        reset_dut();
+        run_test("S0-go0", 0, 0, S0);
+        reset_dut();
+        run_test("S0-go1-jmp0", 1, 0, S0);
+        reset_dut();
+        run_test("S0-go1-jmp1", 1, 1, S0);
 
-        // Test S3 transitions with jmp=1
-        run_test("S0-go1-jmp1", 1, 1);  // S0 -> S3
-        run_test("S3-jmp1", 0, 1);      // S3 -> S3 (y1=1)
-        run_test("S3-jmp0", 0, 0);      // S3 -> S4
+        // Test S1 transitions
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        run_test("S1-jmp0", 0, 0, S1);
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        run_test("S1-jmp1", 0, 1, S1);
 
-        // Test S9 transition to S3
-        run_test("S4-jmp0", 0, 0);      // S4 -> S5
-        run_test("S5-jmp0", 0, 0);      // S5 -> S6
-        run_test("S6-jmp0", 0, 0);      // S6 -> S7
-        run_test("S7-jmp0", 0, 0);      // S7 -> S8
-        run_test("S8-jmp0", 0, 0);      // S8 -> S9
-        run_test("S9-jmp1", 0, 1);      // S9 -> S3
+        // Test S2 transitions
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        @(posedge clk);
+        run_test("S2", 0, 0, S2);
+
+        // Test S3 transitions
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        run_test("S3-jmp0", 0, 0, S3);
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        run_test("S3-jmp1", 0, 1, S3);
+
+        // Test S4 transitions
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        run_test("S4-jmp0", 0, 0, S4);
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        run_test("S4-jmp1", 0, 1, S4);
+
+        // Test S5 transitions
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        run_test("S5-jmp0", 0, 0, S5);
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        run_test("S5-jmp1", 0, 1, S5);
+
+        // Test S6 transitions
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        run_test("S6-jmp0", 0, 0, S6);
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        run_test("S6-jmp1", 0, 1, S6);
+
+        // Test S7 transitions
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        run_test("S7-jmp0", 0, 0, S7);
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        run_test("S7-jmp1", 0, 1, S7);
+
+        // Test S8 transitions
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        run_test("S8-jmp0", 0, 0, S8);
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        run_test("S8-jmp1", 0, 1, S8);
+
+        // Test S9 transitions
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        run_test("S9-jmp0", 0, 0, S9);
+        reset_dut();
+        go = 1; jmp = 0;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        run_test("S9-jmp1", 0, 1, S9);
 
         // Final result
         #20;
